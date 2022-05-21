@@ -1,11 +1,13 @@
 package domain;
 
 import domain.factory.IndividuoFactory;
+import domain.impl.IndividuoPermFunction;
+
 import java.util.*;
 import java.util.stream.Collectors;
 public class Ag {
 
-    public Individuo executar(int nPop, IndividuoFactory indFactory, int nElite, boolean isMax, int nGer, int n_FUNCTION, double DOMAIN_X, double DOMAIN_Y) {
+    public Individuo executar(int nPop, IndividuoFactory indFactory, int nElite, boolean isMax, int nGer) {
         // TODO for para criar nPop individuos em uma lista
 
         List<Individuo> indL = new LinkedList<>();
@@ -25,9 +27,9 @@ public class Ag {
             indL.clear();
 
             // TODO AVALIACAO DE CADA INDIVIDUO
-            for (Individuo ind : joinPop)
+            for (Individuo ind : joinPop) {
                 ind.getAvaliacao();
-
+            }
             // TODO SELECAO DA ELITE
             elite = elite(joinPop,nElite,isMax);
             newPop.addAll(elite);
@@ -40,11 +42,15 @@ public class Ag {
             newPop.addAll(restanteList);
             newPop = isMax? newPop.stream().sorted(Comparator.reverseOrder()).collect(Collectors.toList()):
                              newPop.stream().sorted().collect(Collectors.toList());
+
             indL.addAll(newPop);
 
             // TODO CLEAR NAS LISTAS
             newPop.clear();
             joinPop.clear();
+
+            Individuo ind = getBetterInd(indL);
+           //System.out.println(imprimir(ind,rep));
 
         }
 
@@ -111,10 +117,21 @@ public class Ag {
                 aux += joinPopTemp.get(col).getAvaliacao();
             }
 
+            if(col != 0)
             plebe.add(joinPopTemp.remove(col-1));
+            else
+            plebe.add(joinPopTemp.remove(col));
         }
 
         return plebe;
+    }
+
+    public static String imprimir(Individuo ind, int nGer){
+        String aux = "";
+        aux += nGer;
+        aux +="  F(X): "+ ind.avaliacao+" ";
+        aux +="Genes: " + ind.getGenes().toString();
+        return aux;
     }
 
 }

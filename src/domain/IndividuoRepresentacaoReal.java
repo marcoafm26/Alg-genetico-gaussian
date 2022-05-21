@@ -18,26 +18,53 @@ import java.util.Random;
 
 /**
  *
- * @author aluno
+ * @author Marco Aurélio
  */
-public class IndividuoRepresentacaoReal extends Individuo{
+public abstract class IndividuoRepresentacaoReal extends Individuo{
     
     public Random random;
     public int nDimension;
     public double chanceMutacao;
+
+    public double domain_x;
+
+    public double domain_y;
+
+    public abstract Individuo getNewInstance(List<Double> genes);
+
+    public IndividuoRepresentacaoReal(int nRainhas,double domain_x, double domain_y, double chanceMutacao) {
+        nDimension = nRainhas;
+        this.domain_x = domain_x;
+        this.domain_y = domain_y;
+        this.chanceMutacao = chanceMutacao;
+        random = new Random();
+        genes = geraGenes(this.nDimension,this.domain_x,this.domain_y);
+
+    }
+
+    public IndividuoRepresentacaoReal(int nRainhas,double domain_x, double domain_y, double chanceMutacao, List<Double> genes) {
+        this.nDimension = nRainhas;
+        this.domain_x = domain_x;
+        this.domain_y = domain_y;
+        this.chanceMutacao = chanceMutacao;
+        this.genes = genes;
+        random = new Random();
+    }
+
+    public IndividuoRepresentacaoReal() {
+    }
+
+
     
-    @Override
-    public Double avaliar() {return null;}
-    
-    protected List<Double> geraGenes(int nGenes) {
-        Map<Integer,Integer> hash = new HashMap<>();
-        int rand;
-        List<Double> genes = new ArrayList<>(nGenes);
-        for (int i = 0; i < nGenes; i++) {
-            rand = random.nextInt(nGenes);
+    protected List<Double> geraGenes(int nDimension,double domain_x,double domain_y) {
+        Map<Double,Double> hash = new HashMap<>();
+        double rand;
+        List<Double> genes = new ArrayList<>(nDimension);
+        for (int i = 0; i < nDimension; i++) {
+            rand = random.nextDouble(domain_x,domain_y);
             while (hash.get(rand) != null)
-                rand = random.nextInt(nGenes);
-            genes.add((double) rand);
+                rand = random.nextDouble(domain_x,domain_y);
+            genes.add(rand);
             hash.put(rand, rand);
 
         }
@@ -45,46 +72,47 @@ public class IndividuoRepresentacaoReal extends Individuo{
     }
     @Override
     public List<Individuo> getFilhos(Individuo ind) {
-        int rand = random.nextInt(nDimension);
         double alpha;
-        List<Double> genesFilho_1 = new ArrayList<>(this.nDimension);
-        List<Double> genesFilho_2 = new ArrayList<>(this.nDimension);
+        List<Double> genesFilho_1 = new ArrayList<>(nDimension);
+        List<Double> genesFilho_2 = new ArrayList<>(nDimension);
         List<Individuo> filhos = new LinkedList<>();
-
+        double ruido;
         for (int i = 0; i < this.nDimension; i++) {
             alpha = random.nextGaussian();
-            double valueFilho_1 = this.genes.get(i) + alpha * Math.abs(this.genes.get(i) - ind.genes.get(i));
+            ruido = alpha * Math.abs(this.genes.get(i) - ind.genes.get(i));
+            double valueFilho_1 = this.genes.get(i) + ruido;
 
             alpha = random.nextGaussian();
-            double valueFilho_2 = ind.genes.get(i) + alpha * Math.abs(this.genes.get(i) - ind.genes.get(i));
+            ruido = alpha * Math.abs(this.genes.get(i) - ind.genes.get(i));
+            double valueFilho_2 = ind.genes.get(i) + ruido;
 
-            genesFilho_1.set(i,valueFilho_1);
-            genesFilho_2.set(i,valueFilho_2);
+            genesFilho_1.add(i,valueFilho_1);
+            genesFilho_2.add(i,valueFilho_2);
 
         }
 
-        filhos.add(new IndividuoPermFunction(this.nDimension, genesFilho_1));
-        filhos.add(new IndividuoPermFunction(this.nDimension, genesFilho_2));
+        filhos.add(getNewInstance(genesFilho_1));
+        filhos.add(getNewInstance(genesFilho_2));
         return filhos;
     }
     @Override
     public Individuo getMutante() {
-        List<Double> genesFilho = new ArrayList<>(this.nDimension);
+        List<Double> genesFilho = new ArrayList<>(genes);
         int cont= 0;
         for (int i=0; i < this.genes.size();i++) {
             double chance = random.nextDouble();
             if(chance <= chanceMutacao){
                double ruido = random.nextGaussian();
-               genesFilho.set(i, this.genes.get(i) + ruido);
+               genesFilho.set(i, genesFilho.get(i) + ruido);
                cont++;
             }
         }
         if (cont == 0){
-            int pos = random.nextInt();
-            genes.set(pos,this.genes.get(pos)+random.nextGaussian());
+            int pos = random.nextInt(nDimension);
+            genesFilho.set(pos,genesFilho.get(pos)+random.nextGaussian());
         }
 
-        return new IndividuoPermFunction(this.nDimension, genes);
+        return getNewInstance(genesFilho);
     }
 
     public double somatorio(List<Double> list){
