@@ -31,9 +31,11 @@ public class IndividuoSchwefelFunction extends IndividuoRepresentacaoReal {
         double value = 0;
 
             for (int j = 0; j < this.nDimension; j++) {
-                value += this.genes.get(j) * Math.sin(Math.sqrt(Math.abs(this.genes.get(j))));
+                double avalSen = Math.sin(Math.sqrt(Math.abs(this.genes.get(j))));
+                value += this.genes.get(j) * avalSen;
             }
-            sum = 418.9829 * this.nDimension - value;
+
+            sum = (418.9829 * this.nDimension) - value;
             return sum;
     }
 
@@ -48,11 +50,6 @@ public class IndividuoSchwefelFunction extends IndividuoRepresentacaoReal {
         return super.getMutante();
     }
 
-    @Override
-    public String toString() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
     public static void main(String[] args) {
         //List<Integer> genes = Arrays.asList(0, 1, 2, 3, 4, 5, 6 ,7);
         List<Double> genes = new ArrayList<>();
@@ -60,7 +57,7 @@ public class IndividuoSchwefelFunction extends IndividuoRepresentacaoReal {
             genes.add(i,420.9687);
         }
 
-        Individuo individuo = new IndividuoPermFunction(5,-500,500,0.1,genes);
+        Individuo individuo = new IndividuoSchwefelFunction(5,-500,500,0.1,genes);
         System.out.println(individuo.getAvaliacao());
     }
 }

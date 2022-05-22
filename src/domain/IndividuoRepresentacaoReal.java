@@ -55,7 +55,7 @@ public abstract class IndividuoRepresentacaoReal extends Individuo{
     }
 
 
-    
+
     protected List<Double> geraGenes(int nDimension,double domain_x,double domain_y) {
         Map<Double,Double> hash = new HashMap<>();
         double rand;
@@ -80,19 +80,19 @@ public abstract class IndividuoRepresentacaoReal extends Individuo{
         for (int i = 0; i < this.nDimension; i++) {
             alpha = random.nextGaussian();
             ruido = alpha * Math.abs(this.genes.get(i) - ind.genes.get(i));
-            double valueFilho_1 = this.genes.get(i) + ruido;
+            double valueFilho_1 = boundDomain(this.genes.get(i) + ruido);
 
             alpha = random.nextGaussian();
             ruido = alpha * Math.abs(this.genes.get(i) - ind.genes.get(i));
-            double valueFilho_2 = ind.genes.get(i) + ruido;
+            double valueFilho_2 = boundDomain(ind.genes.get(i) + ruido);
 
             genesFilho_1.add(i,valueFilho_1);
             genesFilho_2.add(i,valueFilho_2);
 
         }
 
-        filhos.add(getNewInstance(genesFilho_1));
-        filhos.add(getNewInstance(genesFilho_2));
+        filhos.add(this.getNewInstance(genesFilho_1));
+        filhos.add(this.getNewInstance(genesFilho_2));
         return filhos;
     }
     @Override
@@ -103,27 +103,25 @@ public abstract class IndividuoRepresentacaoReal extends Individuo{
             double chance = random.nextDouble();
             if(chance <= chanceMutacao){
                double ruido = random.nextGaussian();
-               genesFilho.set(i, genesFilho.get(i) + ruido);
+               genesFilho.set(i, boundDomain(genesFilho.get(i) + ruido));
                cont++;
             }
         }
         if (cont == 0){
             int pos = random.nextInt(nDimension);
-            genesFilho.set(pos,genesFilho.get(pos)+random.nextGaussian());
+            genesFilho.set(pos,boundDomain(genesFilho.get(pos) +  random.nextGaussian()));
         }
 
-        return getNewInstance(genesFilho);
+        return this.getNewInstance(genesFilho);
     }
 
-    public double somatorio(List<Double> list){
-        double soma=0;
-        for(Double value: list){
-            soma+=value;
-        }
-        
-        return soma;
+    public double boundDomain(double point){
+        if (point < this.domain_x)
+            point = this.domain_x;
+        else if (point > this.domain_y )
+            point = this.domain_y;
+        return point;
     }
-            
     @Override
     public String toString() {
         return String.format("nRainhas: %s \nAvaliação: %s", nDimension, avaliacao);

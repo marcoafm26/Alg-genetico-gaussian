@@ -23,6 +23,10 @@ public abstract class Individuo implements Comparable<Individuo>{
         return this.avaliacao;
     }
 
+    public void setAvaliacao(Double avaliacao){
+        this.avaliacao = avaliacao;
+    }
+
     public List<Double> getGenes() {
         return genes;
     }

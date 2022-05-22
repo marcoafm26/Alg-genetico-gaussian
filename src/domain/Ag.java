@@ -50,7 +50,7 @@ public class Ag {
             joinPop.clear();
 
             Individuo ind = getBetterInd(indL);
-           //System.out.println(imprimir(ind,rep));
+            System.out.println(imprimir(ind,rep));
 
         }
 
@@ -68,6 +68,7 @@ public class Ag {
         }
         return ind;
     }
+
     private List<Individuo> geraDescendentes(List<Individuo> indL) {
         List<Individuo> mutanteList = new LinkedList<>();
         List<Individuo> filhosList = new LinkedList<>();
@@ -105,16 +106,25 @@ public class Ag {
     private List<Individuo> roleta(List<Individuo> joinPop, int nRestantes, boolean isMax) {
         List<Individuo> plebe = new LinkedList<>();
         List<Individuo> joinPopTemp = new LinkedList<>(joinPop);
+
         for (int i = 0; i < nRestantes; i++) {
+
+            double betterAval = getBetterInd(joinPopTemp).getAvaliacao();
+            if(betterAval < 0 )
+                betterAval = Math.abs(betterAval) + 0.0001;
+            else
+                betterAval = 0;
+
+            double finalBetterAval = betterAval;
             double somaAvaliacao = isMax ?
-                    joinPopTemp.stream().mapToDouble(individuo -> 1 / individuo.getAvaliacao()).sum():
-                    joinPopTemp.stream().mapToDouble(Individuo::getAvaliacao).sum() ;
+                    joinPopTemp.stream().mapToDouble(individuo -> individuo.getAvaliacao() +finalBetterAval).sum():
+                    joinPopTemp.stream().mapToDouble(individuo  -> 1 / (individuo.getAvaliacao()+ finalBetterAval)).sum();
 
             double limite = somaAvaliacao * Math.random();
             double aux=0;
             int col;
             for (col = 0; ((col < joinPopTemp.size()) && (aux < limite)); col++) {
-                aux += joinPopTemp.get(col).getAvaliacao();
+                aux += joinPopTemp.get(col).getAvaliacao() + betterAval;
             }
 
             if(col != 0)

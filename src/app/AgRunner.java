@@ -12,9 +12,9 @@ public class AgRunner {
 
     public static void main(String[] args) {
         final int N_POP = 20;
-        final int N_DIMENSIONS = 5;
+        final int N_DIMENSIONS = 3;
         final int N_ELITE = 4;
-        final int N_GER = 1000;
+        final int N_GER = 5000;
         final boolean IS_MAX = false;
 
         final double DOMAIN_X = -500;
