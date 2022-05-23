@@ -34,4 +34,14 @@ public abstract class Individuo implements Comparable<Individuo>{
 
     public abstract String toString();
 
+    @Override
+    public int compareTo(Individuo o) {
+        if (this.getAvaliacao() >o.getAvaliacao())
+            return 1;
+        else if (this.getAvaliacao() < o.getAvaliacao()) {
+            return -1;
+        }
+        return 0;
+    }
+
 }

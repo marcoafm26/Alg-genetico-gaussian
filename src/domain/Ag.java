@@ -2,9 +2,15 @@ package domain;
 
 import domain.factory.IndividuoFactory;
 import domain.impl.IndividuoPermFunction;
+import domain.impl.IndividuoSchwefelFunction;
 
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.util.Collections.shuffle;
+
 public class Ag {
 
     public Individuo executar(int nPop, IndividuoFactory indFactory, int nElite, boolean isMax, int nGer) {
@@ -23,6 +29,7 @@ public class Ag {
         for (int rep= 0; rep < nGer; rep++) {
 
             // TODO aleatoriamente selecionar duplas de indivíduos para o crossover
+            joinPop.addAll(indL);
             joinPop.addAll(geraDescendentes(indL)) ;
             indL.clear();
 
@@ -36,7 +43,7 @@ public class Ag {
             joinPop.removeAll(elite);
 
             // TODO SELECAO DO RESTO DA POPULACAO
-            List<Individuo> restanteList = this.roleta(joinPop, nPop - nElite, isMax);
+            List<Individuo> restanteList = rodaRoleta(joinPop, nPop - nElite, isMax);
 
             // TODO JUNCAO DA NOVA POPULACAO
             newPop.addAll(restanteList);
@@ -49,9 +56,7 @@ public class Ag {
             newPop.clear();
             joinPop.clear();
 
-            Individuo ind = getBetterInd(indL);
-            System.out.println(imprimir(ind,rep));
-
+            System.out.println(imprimir(getBetterInd(indL),rep));
         }
 
         return getBetterInd(indL);
@@ -70,77 +75,88 @@ public class Ag {
     }
 
     private List<Individuo> geraDescendentes(List<Individuo> indL) {
+        List<Individuo> joinPop = new LinkedList<>();
+        List<Individuo> listTemp = new LinkedList<>(indL);
         List<Individuo> mutanteList = new LinkedList<>();
         List<Individuo> filhosList = new LinkedList<>();
 
-        Random random = new Random();
-        Map<Integer,Integer> hash = new HashMap<>();
-        List<Individuo> joinPop = new LinkedList<>();
-        int rand, nInd = indL.size();
+        shuffle(listTemp);
 
+        while(!listTemp.isEmpty()){
+            Individuo pai_1 = listTemp.remove(0);
+            Individuo pai_2 = listTemp.remove(0);
+            filhosList.addAll(pai_1.getFilhos(pai_2));
+            mutanteList.add(pai_1.getMutante());
+            mutanteList.add(pai_2.getMutante());
 
-        for (int i = 0; i < nInd; i++) {
-            if (hash.get(i) == null) {
-                rand = random.nextInt(nInd);
-                while (hash.get(rand) != null || rand == i) {
-                    rand = random.nextInt(nInd);
-                }
-                hash.put(rand, rand);
-                hash.put(i, i);
-                filhosList.addAll(indL.get(i).getFilhos(indL.get(rand)));
-                mutanteList.add(indL.get(i).getMutante());
-                mutanteList.add(indL.get(rand).getMutante());
-            }
         }
 
-        joinPop.addAll(indL);
         joinPop.addAll(filhosList);
         joinPop.addAll(mutanteList);
 
         return joinPop;
     }
     private List<Individuo> elite (List<Individuo> joinPop,int nElite, boolean isMax){
-        return isMax ?joinPop.stream().sorted(Comparator.reverseOrder()).limit(nElite).collect(Collectors.toList()):
-                      joinPop.stream().sorted().limit(nElite).collect(Collectors.toList());
+
+        return isMax ?
+                joinPop.stream().sorted(Comparator.reverseOrder()).limit(nElite).collect(Collectors.toList()):
+                joinPop.stream().sorted().limit(nElite).collect(Collectors.toList());
+
+
     }
-    private List<Individuo> roleta(List<Individuo> joinPop, int nRestantes, boolean isMax) {
-        List<Individuo> plebe = new LinkedList<>();
+
+    private List<Individuo> rodaRoleta (List<Individuo> joinPop, int nRestantes, boolean isMax){
         List<Individuo> joinPopTemp = new LinkedList<>(joinPop);
-
+        List<Individuo> resultadoRoleta = new LinkedList<>();
+        shuffle(joinPopTemp);
+        double shift = getBetterInd(joinPop).getAvaliacao();
+        if(shift <= 0 )
+            shift = Math.abs(shift) + 0.0001;
+        else
+            shift = 0;
+        Individuo ind;
         for (int i = 0; i < nRestantes; i++) {
+            ind = roleta(joinPopTemp,isMax,shift);
+            resultadoRoleta.add(ind);
+            joinPopTemp.remove(ind);
+        }
+        return  resultadoRoleta;
+    }
+    private Individuo roleta(List<Individuo> joinPop, boolean isMax , double shift) {
 
-            double betterAval = getBetterInd(joinPopTemp).getAvaliacao();
-            if(betterAval < 0 )
-                betterAval = Math.abs(betterAval) + 0.0001;
-            else
-                betterAval = 0;
-
-            double finalBetterAval = betterAval;
-            double somaAvaliacao = isMax ?
-                    joinPopTemp.stream().mapToDouble(individuo -> individuo.getAvaliacao() +finalBetterAval).sum():
-                    joinPopTemp.stream().mapToDouble(individuo  -> 1 / (individuo.getAvaliacao()+ finalBetterAval)).sum();
-
-            double limite = somaAvaliacao * Math.random();
-            double aux=0;
-            int col;
-            for (col = 0; ((col < joinPopTemp.size()) && (aux < limite)); col++) {
-                aux += joinPopTemp.get(col).getAvaliacao() + betterAval;
-            }
-
-            if(col != 0)
-            plebe.add(joinPopTemp.remove(col-1));
-            else
-            plebe.add(joinPopTemp.remove(col));
+        double somaAvaliacao = somaAvaliacoes(joinPop,isMax,shift);
+        double limite = somaAvaliacao * Math.random();
+        double aux = 0;
+        int col;
+        for (col = 0; ((col < joinPop.size()) && (aux < limite)); col++) {
+            aux += joinPop.get(col).getAvaliacao() + shift;
         }
 
-        return plebe;
+        if(col != 0)
+            return joinPop.get(col-1);
+        else
+            return joinPop.get(col);
     }
 
-    public static String imprimir(Individuo ind, int nGer){
+
+    private double somaAvaliacoes(List<Individuo> individuos,boolean isMax,double shift) {
+        return isMax ?
+                individuos.stream().mapToDouble(individuo -> individuo.getAvaliacao() + shift).sum() :
+                individuos.stream().mapToDouble(individuo -> (1 / individuo.getAvaliacao() + shift )).sum();
+    }
+        public static String imprimir(Individuo ind, int nGer){
+        DecimalFormat df = new DecimalFormat("#,##0.000000");
+        df.setRoundingMode(RoundingMode.DOWN);
         String aux = "";
-        aux += nGer;
-        aux +="  F(X): "+ ind.avaliacao+" ";
-        aux +="Genes: " + ind.getGenes().toString();
+        aux +="Geracao: " + (nGer+1);
+        aux +="       F(X): "+ df.format(ind.avaliacao)+" ";
+            aux +="         Genes: [";
+            for (int i = 0; i < ind.genes.size(); i++) {
+                aux += df.format(ind.genes.get(i));
+                if(i< ind.genes.size()-1)
+                   aux +=", ";
+            }
+        aux +="]";
         return aux;
     }
 

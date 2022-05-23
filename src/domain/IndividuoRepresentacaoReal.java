@@ -5,10 +5,8 @@
  */
 package domain;
 
-import domain.Individuo;
-import domain.impl.IndividuoPermFunction;
-import domain.impl.IndividuoPermFunction;
-import static java.lang.Math.random;
+import static java.util.Collections.shuffle;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -33,12 +31,12 @@ public abstract class IndividuoRepresentacaoReal extends Individuo{
     public abstract Individuo getNewInstance(List<Double> genes);
 
     public IndividuoRepresentacaoReal(int nRainhas,double domain_x, double domain_y, double chanceMutacao) {
-        nDimension = nRainhas;
+        this.nDimension = nRainhas;
         this.domain_x = domain_x;
         this.domain_y = domain_y;
         this.chanceMutacao = chanceMutacao;
-        random = new Random();
-        genes = geraGenes(this.nDimension,this.domain_x,this.domain_y);
+        this.random = new Random();
+        genes = geraGenes(this.nDimension);
 
     }
 
@@ -48,25 +46,21 @@ public abstract class IndividuoRepresentacaoReal extends Individuo{
         this.domain_y = domain_y;
         this.chanceMutacao = chanceMutacao;
         this.genes = genes;
-        random = new Random();
-    }
-
-    public IndividuoRepresentacaoReal() {
+        this.random = new Random();
     }
 
 
-
-    protected List<Double> geraGenes(int nDimension,double domain_x,double domain_y) {
+    protected List<Double> geraGenes(int nDimension) {
         Map<Double,Double> hash = new HashMap<>();
         double rand;
         List<Double> genes = new ArrayList<>(nDimension);
         for (int i = 0; i < nDimension; i++) {
-            rand = random.nextDouble(domain_x,domain_y);
+            rand = this.domain_x + (this.domain_y-this.domain_x)*random.nextDouble();
             while (hash.get(rand) != null)
-                rand = random.nextDouble(domain_x,domain_y);
+                rand = this.domain_x + (this.domain_y-this.domain_x)*random.nextDouble();
             genes.add(rand);
             hash.put(rand, rand);
-
+        shuffle(genes);
         }
         return genes;
     }
@@ -78,11 +72,11 @@ public abstract class IndividuoRepresentacaoReal extends Individuo{
         List<Individuo> filhos = new LinkedList<>();
         double ruido;
         for (int i = 0; i < this.nDimension; i++) {
-            alpha = random.nextGaussian();
+            alpha = this.random.nextGaussian();
             ruido = alpha * Math.abs(this.genes.get(i) - ind.genes.get(i));
             double valueFilho_1 = boundDomain(this.genes.get(i) + ruido);
 
-            alpha = random.nextGaussian();
+            alpha = this.random.nextGaussian();
             ruido = alpha * Math.abs(this.genes.get(i) - ind.genes.get(i));
             double valueFilho_2 = boundDomain(ind.genes.get(i) + ruido);
 
@@ -109,27 +103,24 @@ public abstract class IndividuoRepresentacaoReal extends Individuo{
         }
         if (cont == 0){
             int pos = random.nextInt(nDimension);
-            genesFilho.set(pos,boundDomain(genesFilho.get(pos) +  random.nextGaussian()));
+            double point = genesFilho.get(pos) +  random.nextGaussian();
+            genesFilho.set(pos,boundDomain(point));
         }
 
         return this.getNewInstance(genesFilho);
     }
 
     public double boundDomain(double point){
+
         if (point < this.domain_x)
-            point = this.domain_x;
+            point = this.domain_x-(this.domain_x * 0.01);
         else if (point > this.domain_y )
-            point = this.domain_y;
+            point = this.domain_y-(this.domain_y * 0.01);
         return point;
     }
     @Override
     public String toString() {
         return String.format("nRainhas: %s \nAvaliação: %s", nDimension, avaliacao);
-    }
-
-    @Override
-    public int compareTo(Individuo o) {
-        return this.avaliacao.compareTo(o.avaliacao);
     }
 
 }
